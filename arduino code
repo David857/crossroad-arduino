@@ -1,0 +1,174 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 20, 4);
+
+
+#define green1 8
+#define orange1 9
+#define red1 10
+#define green2 4
+#define orange2 5
+#define red2 6
+
+int staryprujezd = 10;
+const int buttonPin = 3;
+const int buttonPin2 = 2;    
+volatile int zmena = 1;
+int rezim = 2;
+long debouncing_time = 200; 
+volatile unsigned long last_micros;
+unsigned long previousMillis = 0;
+const long interval1 = 500;
+const long interval2 = 500;
+unsigned long currentMillis;
+volatile int i1 = 0;
+volatile int i2 = 0;
+volatile int prujezd = 0;
+int set_red = 1;
+
+int pole[8][6] = {{0,0,1,0,0,1},
+                 {0,1,1,0,0,1},
+                 {1,0,0,0,0,1},
+                 {1,0,0,0,0,1},
+                 {0,1,0,0,0,1},
+                 {0,0,1,0,1,1},
+                 {0,0,1,1,0,0},
+                 {0,0,1,0,1,0}};
+
+/*int pole_noc[6][6] = {{0,0,1,0,0,1},
+                     {0,0,1,0,0,1},
+                     {0,0,1,0,0,1},
+                     {0,0,1,0,0,1},
+                     {0,1,0,0,1,0},
+                     {0,0,0,0,0,0}};*/
+                      
+ int pole_noc[6][6] = {{0,1,0,0,1,0},
+                     {0,0,0,0,0,0},
+                     {0,1,0,0,1,0},
+                     {0,0,0,0,0,0},
+                     {0,1,0,0,1,0},
+                     {0,0,0,0,0,0}};             
+ 
+
+void setup() {
+    lcd.begin()
+    lcd.backlight();
+    Serial.begin(9600);
+    pinMode(green1, OUTPUT);
+    pinMode(orange1, OUTPUT);
+    pinMode(red1, OUTPUT);
+    pinMode(green2, OUTPUT);
+    pinMode(orange2, OUTPUT);
+    pinMode(red2, OUTPUT);
+    pinMode(buttonPin, INPUT);
+    attachInterrupt(digitalPinToInterrupt(buttonPin), debounce, RISING);
+    attachInterrupt(digitalPinToInterrupt(buttonPin2), auta, RISING);
+
+}
+
+void loop(){
+   vypis();
+   
+  while (rezim == 1){
+     den();  
+  }
+  
+  while (rezim == 2){
+     noc();     
+   } 
+}
+
+void vypis (){
+  if (rezim = 1){
+   Serial.println("den");
+   lcd.clear();
+   lcd.setCursor(0, 0);
+   lcd.print("den");
+   delay (1000);
+ }
+}
+
+void debounce(){
+
+ if((long)(micros() - last_micros) >= debouncing_time * 1000) {
+    zmena = 1;
+    i2 = 0;
+    prujezd = 0;
+    last_micros = micros();
+   }
+}
+
+void auta(){
+
+ if((long)(micros() - last_micros) >= debouncing_time * 1000) {
+    prujezd++;
+    i1 = 0;
+    last_micros = micros();
+   }
+}
+
+void den(){
+   if (zmena == 1){
+      if (rezim < 2){
+          rezim++;
+       }
+      else{
+         rezim = 1;   
+        }
+        zmena = 0;
+   
+      }
+
+      currentMillis = millis();
+    if (currentMillis - previousMillis >= interval1) {    
+        previousMillis = currentMillis;
+              digitalWrite(green1,pole[i1][0]);
+              digitalWrite(orange1,pole[i1][1]);
+              digitalWrite(red1,pole[i1][2]);
+              digitalWrite(green2,pole[i1][3]);
+              digitalWrite(orange2,pole[i1][4]);
+              digitalWrite(red2,pole[i1][5]);
+
+              if (i1<7){
+                i1++;
+              }
+              else{
+                i1=1;
+              }          
+   }
+}
+
+void noc(){
+   if ((staryprujezd!=prujezd) && (rezim==2)){
+   Serial.print("Projelo aut: ");
+   Serial.println(prujezd);
+   Serial.println("noc");
+   staryprujezd = prujezd;
+   }
+   if (prujezd == 5){
+      if (rezim < 2){
+          rezim++;
+       }
+      else{
+         rezim = 1;   
+        }
+   }
+    currentMillis = millis();
+    if (currentMillis - previousMillis >= interval2) {    
+        previousMillis = currentMillis;
+              digitalWrite(green1,pole_noc[i2][0]);
+              digitalWrite(orange1,pole_noc[i2][1]);
+              digitalWrite(red1,pole_noc[i2][2]);
+              digitalWrite(green2,pole_noc[i2][3]);
+              digitalWrite(orange2,pole_noc[i2][4]);
+              digitalWrite(red2,pole_noc[i2][5]);
+
+              if (i2<5){
+                i2++;
+              }
+              else{
+                i2=4;
+              }              
+     }
+
+}
