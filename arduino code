@@ -10,11 +10,11 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 #define orange2 5
 #define red2 6
 
-int staryprujezd = 10;
+int oldpassage = 10;
 const int buttonPin = 3;
 const int buttonPin2 = 2;    
-volatile int zmena = 1;
-int rezim = 2;
+volatile int change = 1;
+int mode = 2;
 long debouncing_time = 200; 
 volatile unsigned long last_micros;
 unsigned long previousMillis = 0;
@@ -23,10 +23,10 @@ const long interval2 = 500;
 unsigned long currentMillis;
 volatile int i1 = 0;
 volatile int i2 = 0;
-volatile int prujezd = 0;
+volatile int passage = 0;
 int set_red = 1;
 
-int pole[8][6] = {{0,0,1,0,0,1},
+int array_day[8][6] = {{0,0,1,0,0,1},
                  {0,1,1,0,0,1},
                  {1,0,0,0,0,1},
                  {1,0,0,0,0,1},
@@ -35,14 +35,8 @@ int pole[8][6] = {{0,0,1,0,0,1},
                  {0,0,1,1,0,0},
                  {0,0,1,0,1,0}};
 
-/*int pole_noc[6][6] = {{0,0,1,0,0,1},
-                     {0,0,1,0,0,1},
-                     {0,0,1,0,0,1},
-                     {0,0,1,0,0,1},
-                     {0,1,0,0,1,0},
-                     {0,0,0,0,0,0}};*/
                       
- int pole_noc[6][6] = {{0,1,0,0,1,0},
+ int array_night[6][6] = {{0,1,0,0,1,0},
                      {0,0,0,0,0,0},
                      {0,1,0,0,1,0},
                      {0,0,0,0,0,0},
@@ -51,7 +45,7 @@ int pole[8][6] = {{0,0,1,0,0,1},
  
 
 void setup() {
-    lcd.begin()
+    lcd.begin();
     lcd.backlight();
     Serial.begin(9600);
     pinMode(green1, OUTPUT);
@@ -62,28 +56,28 @@ void setup() {
     pinMode(red2, OUTPUT);
     pinMode(buttonPin, INPUT);
     attachInterrupt(digitalPinToInterrupt(buttonPin), debounce, RISING);
-    attachInterrupt(digitalPinToInterrupt(buttonPin2), auta, RISING);
+    attachInterrupt(digitalPinToInterrupt(buttonPin2), car, RISING);
 
 }
 
 void loop(){
    vypis();
    
-  while (rezim == 1){
-     den();  
+  while (mode == 1){
+     day();  
   }
   
-  while (rezim == 2){
+  while (mode == 2){
      noc();     
    } 
 }
 
 void vypis (){
-  if (rezim = 1){
-   Serial.println("den");
+  if (mode = 1){
+   Serial.println("day");
    lcd.clear();
    lcd.setCursor(0, 0);
-   lcd.print("den");
+   lcd.print("day");
    delay (1000);
  }
 }
@@ -91,43 +85,43 @@ void vypis (){
 void debounce(){
 
  if((long)(micros() - last_micros) >= debouncing_time * 1000) {
-    zmena = 1;
+    change = 1;
     i2 = 0;
-    prujezd = 0;
+    passage = 0;
     last_micros = micros();
    }
 }
 
-void auta(){
+void car(){
 
  if((long)(micros() - last_micros) >= debouncing_time * 1000) {
-    prujezd++;
+    passage++;
     i1 = 0;
     last_micros = micros();
    }
 }
 
-void den(){
-   if (zmena == 1){
-      if (rezim < 2){
-          rezim++;
+void day(){
+   if (change == 1){
+      if (mode < 2){
+          mode++;
        }
       else{
-         rezim = 1;   
+         mode = 1;   
         }
-        zmena = 0;
+        change = 0;
    
       }
 
       currentMillis = millis();
     if (currentMillis - previousMillis >= interval1) {    
         previousMillis = currentMillis;
-              digitalWrite(green1,pole[i1][0]);
-              digitalWrite(orange1,pole[i1][1]);
-              digitalWrite(red1,pole[i1][2]);
-              digitalWrite(green2,pole[i1][3]);
-              digitalWrite(orange2,pole[i1][4]);
-              digitalWrite(red2,pole[i1][5]);
+              digitalWrite(green1,array_day[i1][0]);
+              digitalWrite(orange1,array_day[i1][1]);
+              digitalWrite(red1,array_day[i1][2]);
+              digitalWrite(green2,array_day[i1][3]);
+              digitalWrite(orange2,array_day[i1][4]);
+              digitalWrite(red2,array_day[i1][5]);
 
               if (i1<7){
                 i1++;
@@ -139,29 +133,29 @@ void den(){
 }
 
 void noc(){
-   if ((staryprujezd!=prujezd) && (rezim==2)){
+   if ((oldpassage!=passage) && (mode==2)){
    Serial.print("Projelo aut: ");
-   Serial.println(prujezd);
+   Serial.println(passage);
    Serial.println("noc");
-   staryprujezd = prujezd;
+   oldpassage = passage;
    }
-   if (prujezd == 5){
-      if (rezim < 2){
-          rezim++;
+   if (passage == 5){
+      if (mode < 2){
+          mode++;
        }
       else{
-         rezim = 1;   
+         mode = 1;   
         }
    }
     currentMillis = millis();
     if (currentMillis - previousMillis >= interval2) {    
         previousMillis = currentMillis;
-              digitalWrite(green1,pole_noc[i2][0]);
-              digitalWrite(orange1,pole_noc[i2][1]);
-              digitalWrite(red1,pole_noc[i2][2]);
-              digitalWrite(green2,pole_noc[i2][3]);
-              digitalWrite(orange2,pole_noc[i2][4]);
-              digitalWrite(red2,pole_noc[i2][5]);
+              digitalWrite(green1,array_night[i2][0]);
+              digitalWrite(orange1,array_night[i2][1]);
+              digitalWrite(red1,array_night[i2][2]);
+              digitalWrite(green2,array_night[i2][3]);
+              digitalWrite(orange2,array_night[i2][4]);
+              digitalWrite(red2,array_night[i2][5]);
 
               if (i2<5){
                 i2++;
