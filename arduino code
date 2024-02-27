@@ -2,7 +2,6 @@
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-
 #define green1 8
 #define orange1 9
 #define red1 10
@@ -10,22 +9,23 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 #define orange2 5
 #define red2 6
 
-int oldpassage = 10;
-const int buttonPin = 3;
-const int buttonPin2 = 2;    
-volatile int change = 1;
-int mode = 2;
-long debouncing_time = 200; 
-volatile unsigned long last_micros;
-unsigned long previousMillis = 0;
-const long interval1 = 500;
-const long interval2 = 500;
-unsigned long currentMillis;
-volatile int i1 = 0;
-volatile int i2 = 0;
-volatile int passage = 0;
-int set_red = 1;
+int oldpassage = 10;  // Initialize the variable to hold the previous passage count
+const int buttonPin = 3;  // Pin for the button to switch modes
+const int buttonPin2 = 2; // Pin for the button to simulate passing cars
+volatile int change = 1; // Flag for mode change
+int mode = 2; // Current mode of the intersection
+long debouncing_time = 200; // Debouncing time for button presses
+volatile unsigned long last_micros; // Variable to store the last microsecond value
+unsigned long previousMillis = 0; // Variable to store the last time a certain event occurred
+const long interval1 = 500; // Interval for traffic light changes in day mode
+const long interval2 = 500; // Interval for traffic light changes in night mode
+unsigned long currentMillis; // Current millis value for comparison
+volatile int i1 = 0; // Index for day mode traffic light patterns
+volatile int i2 = 0; // Index for night mode traffic light patterns
+volatile int passage = 0; // Counter for the number of cars passing
+int set_red = 1; // Variable to set the red light
 
+// Array to store day mode traffic light patterns
 int array_day[8][6] = {{0,0,1,0,0,1},
                  {0,1,1,0,0,1},
                  {1,0,0,0,0,1},
@@ -35,14 +35,13 @@ int array_day[8][6] = {{0,0,1,0,0,1},
                  {0,0,1,1,0,0},
                  {0,0,1,0,1,0}};
 
-                      
- int array_night[6][6] = {{0,1,0,0,1,0},
+// Array to store night mode traffic light patterns
+int array_night[6][6] = {{0,1,0,0,1,0},
                      {0,0,0,0,0,0},
                      {0,1,0,0,1,0},
                      {0,0,0,0,0,0},
                      {0,1,0,0,1,0},
                      {0,0,0,0,0,0}};             
- 
 
 void setup() {
     lcd.begin();
@@ -55,9 +54,10 @@ void setup() {
     pinMode(orange2, OUTPUT);
     pinMode(red2, OUTPUT);
     pinMode(buttonPin, INPUT);
+    // Attach interrupt for mode change button
     attachInterrupt(digitalPinToInterrupt(buttonPin), debounce, RISING);
+    // Attach interrupt for car simulation button
     attachInterrupt(digitalPinToInterrupt(buttonPin2), car, RISING);
-
 }
 
 void loop(){
@@ -72,8 +72,9 @@ void loop(){
    } 
 }
 
+// Function to display day mode on LCD
 void vypis (){
-  if (mode = 1){
+  if (mode = 1){ // Should be if (mode == 1)
    Serial.println("day");
    lcd.clear();
    lcd.setCursor(0, 0);
@@ -82,8 +83,8 @@ void vypis (){
  }
 }
 
+// Function for debouncing mode change button
 void debounce(){
-
  if((long)(micros() - last_micros) >= debouncing_time * 1000) {
     change = 1;
     i2 = 0;
@@ -92,8 +93,8 @@ void debounce(){
    }
 }
 
+// Function for simulating passing cars
 void car(){
-
  if((long)(micros() - last_micros) >= debouncing_time * 1000) {
     passage++;
     i1 = 0;
@@ -101,6 +102,7 @@ void car(){
    }
 }
 
+// Function for changing between day and night
 void day(){
    if (change == 1){
       if (mode < 2){
@@ -112,7 +114,7 @@ void day(){
         change = 0;
    
       }
-
+//Timing for another step in day mode 
       currentMillis = millis();
     if (currentMillis - previousMillis >= interval1) {    
         previousMillis = currentMillis;
@@ -132,21 +134,23 @@ void day(){
    }
 }
 
+// Function for night mode operations
 void night(){
-   if ((oldpassage!=passage) && (mode==2)){
+   if ((oldpassage!=passage) && (mode==2)){ // Check if passage count changed and if in night mode
    Serial.print("Cars passed: ");
    Serial.println(passage);
    Serial.println("night");
    oldpassage = passage;
    }
-   if (passage == 5){
-      if (mode < 2){
+   if (passage == 5){ // If 5 cars have passed
+      if (mode < 2){ // If not already in day mode
           mode++;
        }
       else{
          mode = 1;   
         }
    }
+//Timing of blinking in night mode
     currentMillis = millis();
     if (currentMillis - previousMillis >= interval2) {    
         previousMillis = currentMillis;
