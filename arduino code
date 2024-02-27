@@ -68,7 +68,7 @@ void loop(){
   }
   
   while (mode == 2){
-     noc();     
+     night();     
    } 
 }
 
@@ -132,11 +132,11 @@ void day(){
    }
 }
 
-void noc(){
+void night(){
    if ((oldpassage!=passage) && (mode==2)){
-   Serial.print("Projelo aut: ");
+   Serial.print("Cars passed: ");
    Serial.println(passage);
-   Serial.println("noc");
+   Serial.println("night");
    oldpassage = passage;
    }
    if (passage == 5){
